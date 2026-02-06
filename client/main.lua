@@ -33,6 +33,12 @@ RegisterNUICallback("toggleLight", function(data, cb)
     cb("ok")
 end)
 
+-- Preview selection callback (for previewbuttons - no auto-submit)
+RegisterNUICallback("previewSelection", function(data, cb)
+    TriggerEvent("zoo_input:previewSelection", data.name, data.value)
+    cb("ok")
+end)
+
 local function ShowInput(data)
     Wait(150)
     if not data then return end

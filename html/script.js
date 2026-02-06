@@ -52,6 +52,7 @@ const OpenMenu = (data) => {
             case "labelToggle": form += renderLabelToggleInput(item); break;
             // ADMIN MENU TYPES
             case "menubuttons": form += renderMenuButtonsInput(item); break;
+            case "previewbuttons": form += renderPreviewButtonsInput(item); break;
             case "playerlist": form += renderPlayerListInput(item); break;
             case "actiongrid": form += renderActionGridInput(item); break;
             case "playerinfo": form += renderPlayerInfoInput(item); break;
@@ -728,6 +729,52 @@ const selectMenuButton = (name, value) => {
     setTimeout(() => {
         $("#zoo-input-form").submit();
     }, 150);
+};
+
+// ============================================
+// PREVIEW BUTTONS (Select & Preview WITHOUT auto-submit)
+// Used for bodyguard purchase - allows changing selection before confirming
+// ============================================
+
+const renderPreviewButtonsInput = (item) => {
+    const buttons = item.buttons || [];
+    formInputs[item.name] = item.default || '';
+
+    let buttonsHtml = buttons.map(btn => {
+        const selected = btn.value === item.default ? 'selected' : '';
+        return `
+            <div class="menu-btn preview-btn ${selected}" data-value="${btn.value}"
+                onclick="selectPreviewButton('${item.name}', '${btn.value}', this)">
+                <span class="menu-btn-icon">${btn.icon || '📋'}</span>
+                <div class="menu-btn-text">
+                    <span class="menu-btn-label">${btn.label}</span>
+                    <span class="menu-btn-desc">${btn.desc || ''}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="input-group previewbuttons-group">
+            ${buttonsHtml}
+            <input type="hidden" name="${item.name}" value="${item.default || ''}"/>
+        </div>
+    `;
+};
+
+const selectPreviewButton = (name, value, element) => {
+    formInputs[name] = value;
+    $(`input[name="${name}"]`).val(value);
+
+    // Highlight selected button
+    $('.previewbuttons-group .preview-btn').removeClass('selected');
+    $(element).addClass('selected');
+
+    // Send preview callback to game (NOT auto-submit)
+    $.post(`https://${GetParentResourceName()}/previewSelection`, JSON.stringify({
+        name: name,
+        value: value
+    }));
 };
 
 // ============================================

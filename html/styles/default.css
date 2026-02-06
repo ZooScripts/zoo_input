@@ -1046,6 +1046,35 @@ input[type="radio"], input[type="checkbox"] {
 }
 
 /* ============================================
+   PREVIEW BUTTONS (with selection highlight)
+   ============================================ */
+
+.previewbuttons-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.preview-btn.selected {
+    background: linear-gradient(180deg, #c9a84c 0%, #a88a3e 100%);
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 10px rgba(201, 168, 76, 0.5);
+}
+
+.preview-btn.selected .menu-btn-label {
+    color: #1a1a1a;
+    font-weight: 700;
+}
+
+.preview-btn.selected .menu-btn-desc {
+    color: #3a3020;
+}
+
+.preview-btn.selected .menu-btn-icon {
+    color: #1a1a1a;
+}
+
+/* ============================================
    PLAYER LIST
    ============================================ */
 

@@ -3,8 +3,8 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 game 'rdr3'
 
 author 'Zoo Scripts'
-description 'Zoo Input - Custom Input System'
-version '1.0.0'
+description 'Zoo Input - Custom Input System with Preview Buttons'
+version '1.1.0'
 
 client_scripts {
     'client/*.lua'
