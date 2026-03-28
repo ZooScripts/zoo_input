@@ -7,46 +7,37 @@
 -- VERSION CHECK
 -- ============================================
 
-local currentVersion = "1.0.0"
-local versionCheckUrl = "https://gist.githubusercontent.com/saleemmar/4bc5530df629743dc4836b9ed7f5721c/raw/zoo_input_version.json"
+local currentVersion = GetResourceMetadata(GetCurrentResourceName(), 'version', 0)
+local resourceName = "zoo_input"
+local versionCheckUrl = "https://gist.githubusercontent.com/ZooScripts/e8c9541e74419b545b814e55a36b9e34/raw/zoo_input_version.json?t=" .. os.time()
 
 CreateThread(function()
-    Wait(3000) -- Wait for server to fully start
-    
+    Wait(2000)
     PerformHttpRequest(versionCheckUrl, function(err, response, headers)
-        if response then
-            local data = json.decode(response)
-            
-            if data and data.version then
-                local latestVersion = data.version:gsub("%s+", "")
-                
-                if currentVersion ~= latestVersion then
-                    print("^3══════════════════════════════════════════════^7")
-                    print("^3       ZOO_INPUT - UPDATE AVAILABLE!          ^7")
-                    print("^3══════════════════════════════════════════════^7")
-                    print("^7  Current Version: ^1" .. currentVersion .. "^7")
-                    print("^7  Latest Version:  ^2" .. latestVersion .. "^7")
-                    print("^7                                              ^7")
-                    
-                    -- Show update message
-                    if data.message then
-                        print("^7  📝 ^5" .. data.message .. "^7")
-                        print("^7                                              ^7")
-                    end
-                    
-                    -- Show changes list
-                    if data.changes and #data.changes > 0 then
-                        print("^7  Changes:                                    ^7")
-                        for _, change in ipairs(data.changes) do
-                            print("^7  • ^6" .. change .. "^7")
-                        end
-                    end
-                    
-                    print("^3══════════════════════════════════════════════^7")
-                else
-                    print("^2[ZOO_INPUT]^7 ✓ You are running the latest version! ^3(v" .. currentVersion .. ")^7")
+        if err ~= 200 or not response then return end
+
+        local data = json.decode(response)
+        if not data or not data.version then return end
+
+        local latest = data.version:gsub("%s+", "")
+
+        if currentVersion == latest then
+            print("^2[" .. resourceName .. "] You are running the latest version: v" .. currentVersion)
+        else
+            print("┌───────────────────────────────────────────────────┐")
+            print("")
+            print(resourceName .. ":  ^3Update found : ^1Version v" .. latest)
+            print("^7Download it on https://keymaster.fivem.net/asset-grants")
+            print("")
+            if data.updateFiles then
+                print(" ^3Update files:")
+                for _, f in ipairs(data.updateFiles) do
+                    print("^5 * " .. f)
                 end
+                print("")
             end
+            print("")
+            print("└──────────────── ^6zoo-scripts.tebex.io ^7────────────────┘")
         end
     end, "GET")
 end)

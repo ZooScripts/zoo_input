@@ -52,7 +52,6 @@ const OpenMenu = (data) => {
             case "labelToggle": form += renderLabelToggleInput(item); break;
             // ADMIN MENU TYPES
             case "menubuttons": form += renderMenuButtonsInput(item); break;
-            case "previewbuttons": form += renderPreviewButtonsInput(item); break;
             case "playerlist": form += renderPlayerListInput(item); break;
             case "actiongrid": form += renderActionGridInput(item); break;
             case "playerinfo": form += renderPlayerInfoInput(item); break;
@@ -700,51 +699,13 @@ $(document).on("mouseup", () => {
 
 const renderMenuButtonsInput = (item) => {
     const buttons = item.buttons || [];
-    formInputs[item.name] = '';
-    
-    let buttonsHtml = buttons.map(btn => {
-        return `
-            <div class="menu-btn" onclick="selectMenuButton('${item.name}', '${btn.value}')">
-                <span class="menu-btn-icon">${btn.icon || '📋'}</span>
-                <div class="menu-btn-text">
-                    <span class="menu-btn-label">${btn.label}</span>
-                    <span class="menu-btn-desc">${btn.desc || ''}</span>
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    return `
-        <div class="input-group menubuttons-group">
-            ${buttonsHtml}
-            <input type="hidden" name="${item.name}" value=""/>
-        </div>
-    `;
-};
-
-const selectMenuButton = (name, value) => {
-    formInputs[name] = value;
-    $(`input[name="${name}"]`).val(value);
-    // Auto submit
-    setTimeout(() => {
-        $("#zoo-input-form").submit();
-    }, 150);
-};
-
-// ============================================
-// PREVIEW BUTTONS (Select & Preview WITHOUT auto-submit)
-// Used for bodyguard purchase - allows changing selection before confirming
-// ============================================
-
-const renderPreviewButtonsInput = (item) => {
-    const buttons = item.buttons || [];
+    const autoSubmit = item.autoSubmit !== false;
     formInputs[item.name] = item.default || '';
 
     let buttonsHtml = buttons.map(btn => {
-        const selected = btn.value === item.default ? 'selected' : '';
+        const isDefault = item.default && item.default === btn.value;
         return `
-            <div class="menu-btn preview-btn ${selected}" data-value="${btn.value}"
-                onclick="selectPreviewButton('${item.name}', '${btn.value}', this)">
+            <div class="menu-btn ${isDefault ? 'selected' : ''}" onclick="selectMenuButton('${item.name}', '${btn.value}', ${autoSubmit})">
                 <span class="menu-btn-icon">${btn.icon || '📋'}</span>
                 <div class="menu-btn-text">
                     <span class="menu-btn-label">${btn.label}</span>
@@ -755,26 +716,31 @@ const renderPreviewButtonsInput = (item) => {
     }).join('');
 
     return `
-        <div class="input-group previewbuttons-group">
+        <div class="input-group menubuttons-group">
             ${buttonsHtml}
             <input type="hidden" name="${item.name}" value="${item.default || ''}"/>
         </div>
     `;
 };
 
-const selectPreviewButton = (name, value, element) => {
+const selectMenuButton = (name, value, autoSubmit) => {
     formInputs[name] = value;
     $(`input[name="${name}"]`).val(value);
 
-    // Highlight selected button
-    $('.previewbuttons-group .preview-btn').removeClass('selected');
-    $(element).addClass('selected');
+    $(`.menubuttons-group .menu-btn`).removeClass('selected');
+    event.currentTarget.classList.add('selected');
 
-    // Send preview callback to game (NOT auto-submit)
+    // Send preview event to game (for bodyguard preview system)
     $.post(`https://${GetParentResourceName()}/previewSelection`, JSON.stringify({
         name: name,
         value: value
     }));
+
+    if (autoSubmit) {
+        setTimeout(() => {
+            $("#zoo-input-form").submit();
+        }, 150);
+    }
 };
 
 // ============================================
@@ -949,3 +915,81 @@ const selectPreset = (name, value, sliderName, sendPreview) => {
         $.post(`https://${GetParentResourceName()}/previewScale`, JSON.stringify({ scale: value }));
     }
 };
+
+// ==================== NOTIFICATION SYSTEM ====================
+window.addEventListener("message", function(event) {
+    if (event.data.action === "SHOW_NOTIFY") {
+        showNotify(event.data.msg, event.data.duration || 4000, event.data.type || "info");
+    }
+});
+
+function showNotify(msg, duration, type) {
+    const container = document.getElementById("zoo-notify-container");
+    if (!container) return;
+
+    const icons = {
+        info: "&#9432;",
+        success: "&#10003;",
+        error: "&#10007;",
+        warning: "&#9888;"
+    };
+
+    const borderColors = {
+        info: "#c8a96e",
+        success: "#6b8f4a",
+        error: "#8b3a3a",
+        warning: "#8b7a3a"
+    };
+
+    const notify = document.createElement("div");
+    notify.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: linear-gradient(135deg, rgba(15,13,10,0.92), rgba(30,25,20,0.92));
+        border: 1px solid rgba(200,169,110,0.2);
+        border-left: 4px solid ${borderColors[type] || borderColors.info};
+        color: #e8dcc8;
+        padding: 14px 22px;
+        margin-bottom: 10px;
+        font-family: 'PlayfairDisplay', serif;
+        font-size: 16px;
+        letter-spacing: 0.5px;
+        border-radius: 3px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(200,169,110,0.1);
+        opacity: 0;
+        transform: translateX(60px);
+        transition: all 0.5s ease;
+        direction: auto;
+        text-align: start;
+        min-width: 280px;
+        backdrop-filter: blur(4px);
+    `;
+
+    const icon = document.createElement("span");
+    icon.innerHTML = icons[type] || icons.info;
+    icon.style.cssText = `
+        font-size: 20px;
+        color: ${borderColors[type] || borderColors.info};
+        flex-shrink: 0;
+    `;
+
+    const text = document.createElement("span");
+    text.textContent = msg;
+    text.style.cssText = `flex: 1; line-height: 1.4;`;
+
+    notify.appendChild(icon);
+    notify.appendChild(text);
+    container.appendChild(notify);
+
+    setTimeout(() => {
+        notify.style.opacity = "1";
+        notify.style.transform = "translateX(0)";
+    }, 10);
+
+    setTimeout(() => {
+        notify.style.opacity = "0";
+        notify.style.transform = "translateX(60px)";
+        setTimeout(() => notify.remove(), 500);
+    }, duration);
+}

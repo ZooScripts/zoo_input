@@ -27,15 +27,17 @@ RegisterNUICallback("previewScale", function(data, cb)
     cb("ok")
 end)
 
--- Toggle light callback
-RegisterNUICallback("toggleLight", function(data, cb)
-    TriggerEvent("zoo_input:toggleLight", data.enabled)
+-- Preview callback for menubuttons (bodyguard preview system)
+RegisterNUICallback("previewSelection", function(data, cb)
+    if data and data.name and data.value then
+        TriggerEvent("zoo_input:previewSelection", data.name, data.value)
+    end
     cb("ok")
 end)
 
--- Preview selection callback (for previewbuttons - no auto-submit)
-RegisterNUICallback("previewSelection", function(data, cb)
-    TriggerEvent("zoo_input:previewSelection", data.name, data.value)
+-- Toggle light callback
+RegisterNUICallback("toggleLight", function(data, cb)
+    TriggerEvent("zoo_input:toggleLight", data.enabled)
     cb("ok")
 end)
 
@@ -82,3 +84,67 @@ local function GetPlayers()
 end
 
 exports("GetPlayers", GetPlayers)
+
+-- Notification export (supports all languages including Arabic)
+local function ShowNotify(msg, duration, type)
+    SendNUIMessage({
+        action = "SHOW_NOTIFY",
+        msg = msg or "",
+        duration = duration or 4000,
+        type = type or "info"  -- "info", "success", "error", "warning"
+    })
+end
+
+exports("Notify", ShowNotify)
+
+-- Test command with slider
+RegisterCommand('testinput', function()
+    local dialog = exports['zoo_input']:ShowInput({
+        header = 'Zoo Input',
+        submitText = "Confirm",
+        inputs = {
+            { type = 'text', name = 'playername', text = 'Player Name', isRequired = true },
+            { type = 'slider', name = 'scale', text = 'Character Height', min = 0.85, max = 1.15, step = 0.01, default = 1.0, preview = true },
+            { type = 'select', name = 'currency', text = 'Currency', options = {
+                { text = 'Cash', value = 'cash' },
+                { text = 'Gold', value = 'gold' },
+            }}
+        },
+        onPreview = function(scale)
+            print("Preview scale: " .. scale)
+            -- Here you can apply preview to character
+        end
+    })
+    
+    if dialog then
+        print("Result: " .. json.encode(dialog))
+    else
+        print("Cancelled")
+    end
+end, false)
+
+-- Test command with players list
+RegisterCommand('testplayers', function()
+    -- Request players from server first
+    TriggerServerEvent('zoo_input:getPlayers')
+end, false)
+
+RegisterNetEvent('zoo_input:playersList', function(players)
+    local dialog = exports['zoo_input']:ShowInput({
+        header = 'Admin Panel',
+        submitText = "Execute",
+        inputs = {
+            { type = 'players', name = 'targetPlayer', players = players },
+            { type = 'select', name = 'action', text = 'Action', options = {
+                { text = 'Set Scale', value = 'setScale' },
+                { text = 'Ban', value = 'ban' },
+                { text = 'Kick', value = 'kick' },
+            }}
+        }
+    })
+    
+    if dialog then
+        print("Selected Player: " .. dialog.targetPlayer)
+        print("Action: " .. dialog.action)
+    end
+end)

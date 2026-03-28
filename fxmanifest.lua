@@ -3,7 +3,7 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 game 'rdr3'
 
 author 'Zoo Scripts'
-description 'Zoo Input - Custom Input System with Preview Buttons'
+description 'Zoo Input - Custom Input System'
 version '1.1.0'
 
 client_scripts {
@@ -25,3 +25,13 @@ files {
 }
 
 lua54 'yes'
+
+escrow_ignore {
+    'client/*.lua',
+    'server/*.lua',
+    'html/index.html',
+    'html/styles/*.css',
+    'html/script.js',
+    'html/img/*.png',
+    'html/fonts/*.ttf',
+}
